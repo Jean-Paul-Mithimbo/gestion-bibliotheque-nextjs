@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'GET':
       try {
-        const livre = await Livre.findById(id).populate('auteur_id', 'nom nationalite');
+        const livre = await Livre.findById(id).populate('auteur_ids', 'nom nationalite');
         if (!livre) {
           return res.status(404).json({ success: false, error: 'Livre non trouvé' });
         }
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         const livre = await Livre.findByIdAndUpdate(id, req.body, {
           new: true,
           runValidators: true,
-        }).populate('auteur_id', 'nom');
+        }).populate('auteur_ids', 'nom');
         if (!livre) {
           return res.status(404).json({ success: false, error: 'Livre non trouvé' });
         }

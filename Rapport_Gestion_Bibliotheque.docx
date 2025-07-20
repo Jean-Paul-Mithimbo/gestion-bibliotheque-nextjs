@@ -1,0 +1,167 @@
+# Rapport de TP : Gestion de Bibliothèque avec MongoDB (NoSQL) et Next.js
+
+## 1. Introduction
+
+Dans le cadre du cours de base de données non relationnelle, ce projet consiste à développer une application de gestion de bibliothèque utilisant MongoDB (NoSQL) et Next.js. Ce rapport présente l’architecture, la modélisation, les choix techniques, et l’utilisation du référencement et de l’imbrication dans MongoDB.
+
+---
+
+## 2. Présentation du Projet
+
+L’application permet de :
+- Gérer les livres, auteurs, lecteurs
+- Gérer les emprunts et retours
+- Authentifier les utilisateurs
+
+---
+
+## 3. Choix de la Base de Données NoSQL : MongoDB
+
+### 3.1 Pourquoi MongoDB ?
+- Schéma flexible
+- Scalabilité
+- Intégration facile avec Node.js/Next.js
+
+### 3.2 Avantages de NoSQL dans ce projet
+- Modélisation flexible
+- Performance
+- Adapté aux données semi-structurées
+
+---
+
+## 4. Architecture de l’Application
+
+- **Frontend & Backend** : Next.js
+- **Base de données** : MongoDB
+- **Authentification** : NextAuth.js
+
+Organisation :
+- `/pages` : pages et API
+- `/lib/models` : modèles de données
+- `/components` : composants UI
+- `/lib/mongodb.js` : connexion DB
+
+---
+
+## 5. Modélisation des Données
+
+### 5.1 Schéma des collections
+
+**Livre**
+- titre, auteurs (références, tableau d'ObjectId), année, disponible
+
+**Auteur**
+- nom, prénom, biographie
+
+**Lecteur**
+- nom, prénom, email
+
+**Emprunt**
+- livre (référence), lecteur (référence), dateEmprunt, dateRetour
+
+**Utilisateur**
+- email, password, rôle
+
+### 5.2 Relations et Référencement/Imbrication
+
+- **Référencement** :
+  - Le champ `auteur_ids` dans Livre est un tableau de références (ObjectId) vers la collection Auteur, permettant d'associer plusieurs auteurs à un même livre.
+  - Les champs `livre` et `lecteur` dans Emprunt sont des références (ObjectId) vers d’autres collections.
+- **Imbrication** :
+  - Peu utilisée ici, car les entités sont distinctes et évoluent séparément. On privilégie le référencement pour éviter la redondance et faciliter la gestion des relations.
+
+---
+
+## 6. Diagramme de la Base de Données
+
+```mermaid
+erDiagram
+  "Livre" {
+    string titre
+    ObjectId[] auteur_ids
+    number annee
+    boolean disponible
+  }
+  "Auteur" {
+    string nom
+    string prenom
+    string biographie
+  }
+  "Lecteur" {
+    string nom
+    string prenom
+    string email
+  }
+  "Emprunt" {
+    ObjectId livre
+    ObjectId lecteur
+    date dateEmprunt
+    date dateRetour
+  }
+  "User" {
+    string email
+    string password
+    string role
+  }
+  Livre }o--|| Auteur : "auteur_ids"
+  Emprunt }o--|| Livre : "livre"
+  Emprunt }o--|| Lecteur : "lecteur"
+```
+
+---
+
+## 7. Fonctionnalités Clés
+
+- Authentification (NextAuth.js)
+- Gestion des livres, auteurs, lecteurs
+- Gestion des emprunts/retours
+- Génération de rapports
+
+---
+
+## 8. Exemples de Requêtes MongoDB
+
+- Ajouter un livre avec plusieurs auteurs :
+  ```js
+  db.livres.insertOne({ titre: "1984", auteur_ids: [ObjectId("..."), ObjectId("...")], annee: 1949, disponible: true })
+  ```
+- Lister les livres disponibles :
+  ```js
+  db.livres.find({ disponible: true })
+  ```
+- Emprunter un livre :
+  ```js
+  db.emprunts.insertOne({ livre: ObjectId("..."), lecteur: ObjectId("..."), dateEmprunt: new Date() })
+  db.livres.updateOne({ _id: ObjectId("...") }, { $set: { disponible: false } })
+  ```
+
+---
+
+## 9. Avantages et Limites de l’approche NoSQL
+
+**Avantages** :
+- Schéma flexible, évolutif
+- Rapidité de développement
+- Adapté aux applications web modernes
+
+**Limites** :
+- Moins adapté aux transactions complexes
+- Moins de contraintes d’intégrité référentielle
+
+---
+
+## 10. Conclusion
+
+Ce projet illustre l’utilisation de MongoDB pour une application web moderne, avec un schéma flexible et une gestion efficace des relations via le référencement. L’approche NoSQL s’est révélée adaptée pour ce type de projet.
+
+---
+
+## 11. Annexes
+
+- Extraits de code (modèles, API)
+- Captures d’écran de l’application
+- Schéma de la base de données (voir ci-dessus)
+
+---
+
+*Vous pouvez compléter ce rapport avec des histoires d’utilisateurs, des captures d’écran, et des exemples de code supplémentaires selon vos besoins.* 

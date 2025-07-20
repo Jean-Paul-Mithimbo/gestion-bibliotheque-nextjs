@@ -1,9 +1,21 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useSession, signOut } from 'next-auth/react';
 import { Book, Users, UserCheck, RotateCcw, Home } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Layout = ({ children }) => {
   const router = useRouter();
+  const { data: session } = useSession();
   
   const navigation = [
     { name: 'Accueil', href: '/', icon: Home },
@@ -16,6 +28,10 @@ const Layout = ({ children }) => {
   const isActive = (path) => {
     if (path === '/') return router.pathname === path;
     return router.pathname.startsWith(path);
+  };
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/auth/signin' });
   };
 
   return (
@@ -50,6 +66,46 @@ const Layout = ({ children }) => {
                   );
                 })}
               </div>
+            </div>
+            
+            {/* User Menu */}
+            <div className="flex items-center">
+              {session ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={session.user?.image} alt={session.user?.name} />
+                        <AvatarFallback>
+                          {session.user?.name?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {session.user?.name}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {session.user?.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      Se déconnecter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/auth/signin">
+                  <Button variant="outline" size="sm">
+                    Se connecter
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

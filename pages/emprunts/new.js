@@ -117,7 +117,7 @@ export default function NewEmpruntPage() {
                 <SelectContent>
                   {livresDisponibles.map((livre) => (
                     <SelectItem key={livre._id} value={livre._id}>
-                      {livre.titre} - {livre.auteur_id?.nom}
+                      {livre.titre} - {Array.isArray(livre.auteur_ids) ? livre.auteur_ids.map(a => a.nom).join(', ') : (livre.auteur_id?.nom || 'Auteur inconnu')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -137,8 +137,8 @@ export default function NewEmpruntPage() {
             )}
 
             <div className="flex gap-4 pt-4">
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={loading || livresDisponibles.length === 0}
               >
                 {loading ? 'Création...' : (

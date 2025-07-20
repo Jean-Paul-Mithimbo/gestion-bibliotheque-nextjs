@@ -70,10 +70,11 @@ export default function LivreDetailPage() {
               <p className="text-gray-600">{livre.titre}</p>
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Auteur</h3>
+              <h3 className="font-medium text-gray-900">Auteurs</h3>
               <p className="text-gray-600">
-                {livre.auteur_id?.nom || 'Auteur inconnu'}
-                {livre.auteur_id?.nationalite && ` (${livre.auteur_id.nationalite})`}
+                {Array.isArray(livre.auteur_ids) && livre.auteur_ids.length > 0
+                  ? livre.auteur_ids.map(a => a.nom).join(', ')
+                  : 'Auteur inconnu'}
               </p>
             </div>
             <div>
@@ -105,8 +106,8 @@ export default function LivreDetailPage() {
                 Modifier le livre
               </Button>
             </Link>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               className="w-full"
               onClick={handleDelete}
             >

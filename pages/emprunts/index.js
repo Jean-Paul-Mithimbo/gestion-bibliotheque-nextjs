@@ -8,12 +8,13 @@ import Link from 'next/link';
 import { Loading } from '@/components/ui/loading';
 import { ErrorMessage } from '@/components/ui/error';
 import { toast } from 'sonner';
+import DownloadReports from '../../components/DownloadReports';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
 const EmpruntCard = ({ emprunt, onReturn }) => {
   const [loading, setLoading] = useState(false);
-  
+
   const handleReturn = async () => {
     if (confirm('Confirmer le retour de ce livre ?')) {
       setLoading(true);
@@ -67,8 +68,8 @@ const EmpruntCard = ({ emprunt, onReturn }) => {
           )}
         </div>
         {isActif && (
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             onClick={handleReturn}
             disabled={loading}
             className="w-full"
@@ -85,6 +86,7 @@ const EmpruntCard = ({ emprunt, onReturn }) => {
 export default function EmpruntsPage() {
   const { data, error, mutate } = useSWR('/api/emprunts', fetcher);
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
   const handleReturn = () => {
     mutate();
@@ -94,25 +96,40 @@ export default function EmpruntsPage() {
   if (!data) return <Loading />;
 
   const emprunts = data.data || [];
-  const empruntsFiltres = filter === 'all' 
-    ? emprunts 
-    : emprunts.filter(emprunt => filter === 'actif' ? !emprunt.date_retour : emprunt.date_retour);
+  const empruntsFiltres = (filter === 'all'
+    ? emprunts
+    : emprunts.filter(emprunt => filter === 'actif' ? !emprunt.date_retour : emprunt.date_retour)
+  ).filter(emprunt =>
+  (emprunt.livre_id?.titre?.toLowerCase().includes(search.toLowerCase()) ||
+    emprunt.lecteur_id?.nom?.toLowerCase().includes(search.toLowerCase()))
+  );
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Emprunts</h1>
           <p className="mt-2 text-gray-600">
             Gérez les emprunts de votre bibliothèque
           </p>
+          <DownloadReports reports={['emprunts']} />
         </div>
-        <Link href="/emprunts/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvel emprunt
-          </Button>
-        </Link>
+        <div className="flex flex-col md:flex-row gap-2 md:items-center">
+          <input
+            type="text"
+            placeholder="Rechercher un livre ou un lecteur..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="border rounded px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+            style={{ minWidth: 220 }}
+          />
+          <Link href="/emprunts/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvel emprunt
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="flex gap-4 mb-6">
@@ -144,7 +161,7 @@ export default function EmpruntsPage() {
                 Aucun emprunt trouvé
               </h3>
               <p className="text-gray-500 mb-4">
-                {filter === 'all' 
+                {filter === 'all'
                   ? "Commencez par créer votre premier emprunt"
                   : `Aucun emprunt ${filter === 'actif' ? 'en cours' : 'retourné'} pour le moment`
                 }

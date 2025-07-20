@@ -53,6 +53,7 @@ const AuteurCard = ({ auteur, onDelete }) => {
 
 export default function AuteursPage() {
   const { data, error, mutate } = useSWR('/api/auteurs', fetcher);
+  const [search, setSearch] = useState('');
 
   const handleDelete = async (id) => {
     try {
@@ -71,25 +72,39 @@ export default function AuteursPage() {
   if (!data) return <Loading />;
 
   const auteurs = data.data || [];
+  const auteursFiltres = auteurs.filter(auteur =>
+    auteur.nom.toLowerCase().includes(search.toLowerCase()) ||
+    auteur.nationalite.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Auteurs</h1>
           <p className="mt-2 text-gray-600">
             Gérez les auteurs de votre bibliothèque
           </p>
         </div>
-        <Link href="/auteurs/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvel auteur
-          </Button>
-        </Link>
+        <div className="flex flex-col md:flex-row gap-2 md:items-center">
+          <input
+            type="text"
+            placeholder="Rechercher un auteur ou une nationalité..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="border rounded px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+            style={{ minWidth: 220 }}
+          />
+          <Link href="/auteurs/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvel auteur
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {auteurs.length === 0 ? (
+      {auteursFiltres.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
@@ -110,7 +125,7 @@ export default function AuteursPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {auteurs.map((auteur) => (
+          {auteursFiltres.map((auteur) => (
             <AuteurCard
               key={auteur._id}
               auteur={auteur}

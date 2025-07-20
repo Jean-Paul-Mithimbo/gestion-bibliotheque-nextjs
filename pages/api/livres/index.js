@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   switch (method) {
     case 'GET':
       try {
-        const livres = await Livre.find({}).populate('auteur_id', 'nom');
+        const livres = await Livre.find({}).populate('auteur_ids', 'nom');
         res.status(200).json({ success: true, data: livres });
       } catch (error) {
         res.status(400).json({ success: false, error: error.message });
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     case 'POST':
       try {
         const livre = await Livre.create(req.body);
-        await livre.populate('auteur_id', 'nom');
+        await livre.populate('auteur_ids', 'nom');
         res.status(201).json({ success: true, data: livre });
       } catch (error) {
         res.status(400).json({ success: false, error: error.message });

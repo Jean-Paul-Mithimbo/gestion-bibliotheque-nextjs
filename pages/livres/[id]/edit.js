@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +10,16 @@ import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { Loading } from '@/components/ui/loading';
 import { ErrorMessage } from '@/components/ui/error';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
-export default function NewLivrePage() {
+export default function EditLivrePage() {
   const router = useRouter();
+  const { id } = router.query;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
@@ -27,7 +29,23 @@ export default function NewLivrePage() {
   });
   const [selectedAuteur, setSelectedAuteur] = useState('');
 
+  const { data, error: fetchError, mutate } = useSWR(
+    id ? `/api/livres/${id}` : null,
+    fetcher
+  );
+
   const { data: auteursData, error: auteursError } = useSWR('/api/auteurs', fetcher);
+
+  useEffect(() => {
+    if (data?.data) {
+      const livre = data.data;
+      setFormData({
+        titre: livre.titre,
+        auteur_ids: Array.isArray(livre.auteur_ids) ? livre.auteur_ids.map(a => a._id) : [],
+        date_publication: new Date(livre.date_publication).toISOString().split('T')[0],
+      });
+    }
+  }, [data]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,8 +53,8 @@ export default function NewLivrePage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/livres', {
-        method: 'POST',
+      const response = await fetch(`/api/livres/${id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -46,12 +64,13 @@ export default function NewLivrePage() {
       const result = await response.json();
 
       if (result.success) {
-        router.push('/livres');
+        toast.success('Livre modifié avec succès');
+        router.push(`/livres/${id}`);
       } else {
-        setError(result.error || 'Erreur lors de la création du livre');
+        setError(result.error || 'Erreur lors de la modification du livre');
       }
     } catch (err) {
-      setError('Erreur lors de la création du livre');
+      setError('Erreur lors de la modification du livre');
     } finally {
       setLoading(false);
     }
@@ -60,27 +79,29 @@ export default function NewLivrePage() {
   const handleChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
-      [field]: field === 'auteur_ids' ? (Array.isArray(value) ? value : value ? [value] : []) : value
+      [field]: value
     }));
   };
 
-  if (auteursError) return <ErrorMessage message="Erreur lors du chargement des auteurs" />;
-  if (!auteursData) return <Loading />;
+  if (fetchError || auteursError) {
+    return <ErrorMessage message="Erreur lors du chargement des données" onRetry={() => mutate()} />;
+  }
+  if (!data || !auteursData) return <Loading />;
 
   const auteurs = auteursData.data || [];
 
   return (
     <div className="px-4 py-6 sm:px-0">
       <div className="mb-6">
-        <Link href="/livres" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700">
+        <Link href={`/livres/${id}`} className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700">
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Retour aux livres
+          Retour aux détails
         </Link>
         <h1 className="text-3xl font-bold text-gray-900 mt-2">
-          Nouveau livre
+          Modifier le livre
         </h1>
         <p className="mt-2 text-gray-600">
-          Ajoutez un nouveau livre à la collection
+          Modifiez les informations du livre
         </p>
       </div>
 
@@ -88,7 +109,7 @@ export default function NewLivrePage() {
         <CardHeader>
           <CardTitle>Informations du livre</CardTitle>
           <CardDescription>
-            Remplissez les informations pour créer un nouveau livre
+            Modifiez les informations du livre
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -157,14 +178,14 @@ export default function NewLivrePage() {
 
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={loading}>
-                {loading ? 'Création...' : (
+                {loading ? 'Modification...' : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Créer le livre
+                    Modifier le livre
                   </>
                 )}
               </Button>
-              <Link href="/livres">
+              <Link href={`/livres/${id}`}>
                 <Button type="button" variant="outline">
                   Annuler
                 </Button>

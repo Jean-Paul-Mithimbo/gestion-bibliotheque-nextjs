@@ -7,6 +7,7 @@ import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { Loading, LoadingCard } from '@/components/ui/loading';
 import { ErrorMessage } from '@/components/ui/error';
+import DownloadReports from '../../components/DownloadReports';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -64,6 +65,7 @@ const LivreCard = ({ livre, onDelete }) => {
 export default function LivresPage() {
   const { data, error, mutate } = useSWR('/api/livres', fetcher);
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
   const handleDelete = async (id) => {
     try {
@@ -82,25 +84,40 @@ export default function LivresPage() {
   if (!data) return <Loading />;
 
   const livres = data.data || [];
-  const livresFiltres = filter === 'all' 
-    ? livres 
-    : livres.filter(livre => livre.disponible === (filter === 'disponible'));
+  const livresFiltres = (filter === 'all'
+    ? livres
+    : livres.filter(livre => livre.disponible === (filter === 'disponible'))
+  ).filter(livre =>
+    livre.titre.toLowerCase().includes(search.toLowerCase()) ||
+    (Array.isArray(livre.auteur_ids) ? livre.auteur_ids.map(a => a.nom).join(', ').toLowerCase().includes(search.toLowerCase()) : false)
+  );
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Livres</h1>
           <p className="mt-2 text-gray-600">
             Gérez la collection de livres de votre bibliothèque
           </p>
+          <DownloadReports reports={['livres']} />
         </div>
-        <Link href="/livres/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau livre
-          </Button>
-        </Link>
+        <div className="flex flex-col md:flex-row gap-2 md:items-center">
+          <input
+            type="text"
+            placeholder="Rechercher un livre ou un auteur..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="border rounded px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+            style={{ minWidth: 220 }}
+          />
+          <Link href="/livres/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau livre
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="flex gap-4 mb-6">
@@ -132,7 +149,7 @@ export default function LivresPage() {
                 Aucun livre trouvé
               </h3>
               <p className="text-gray-500 mb-4">
-                {filter === 'all' 
+                {filter === 'all'
                   ? "Commencez par ajouter votre premier livre"
                   : `Aucun livre ${filter === 'disponible' ? 'disponible' : 'emprunté'} pour le moment`
                 }

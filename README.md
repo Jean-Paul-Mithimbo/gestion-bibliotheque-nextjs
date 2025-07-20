@@ -14,6 +14,7 @@ Une application complète de gestion de bibliothèque construite avec Next.js, M
 ## 🛠️ Technologies utilisées
 
 - **Frontend** : Next.js 13 (Pages Router), React 18
+- **Authentification** : NextAuth.js avec Google OAuth et credentials
 - **Base de données** : MongoDB avec Mongoose
 - **Styling** : Tailwind CSS
 - **Composants UI** : shadcn/ui
@@ -60,9 +61,25 @@ MONGODB_URI=mongodb://localhost:27017/bibliotheque
 
 # Pour MongoDB Atlas :
 # MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/bibliotheque?retryWrites=true&w=majority
+
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here
+
+# Google OAuth Configuration (optionnel)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
-5. **Lancer l'application**
+5. **Configuration Google OAuth (optionnel)**
+   - Aller sur [Google Cloud Console](https://console.cloud.google.com/)
+   - Créer un nouveau projet ou sélectionner un projet existant
+   - Activer l'API Google+ 
+   - Créer des identifiants OAuth 2.0
+   - Ajouter `http://localhost:3000/api/auth/callback/google` dans les URI de redirection
+   - Copier le Client ID et Client Secret dans `.env.local`
+
+6. **Lancer l'application**
 ```bash
 npm run dev
 ```
@@ -83,13 +100,16 @@ L'application sera disponible sur [http://localhost:3000](http://localhost:3000)
 │       ├── Auteur.js
 │       ├── Livre.js
 │       ├── Lecteur.js
-│       └── Emprunt.js
+│       ├── Emprunt.js
+│       └── User.js            # Modèle utilisateur pour l'auth
 ├── pages/
 │   ├── api/                   # API Routes
+│   │   ├── auth/              # Routes d'authentification
 │   │   ├── auteurs/
 │   │   ├── livres/
 │   │   ├── lecteurs/
 │   │   └── emprunts/
+│   ├── auth/                  # Pages d'authentification
 │   ├── auteurs/               # Pages auteurs
 │   ├── livres/                # Pages livres
 │   ├── lecteurs/              # Pages lecteurs
@@ -123,7 +143,21 @@ L'application sera disponible sur [http://localhost:3000](http://localhost:3000)
 - `date_emprunt` : Date (défaut: Date.now)
 - `date_retour` : Date (optionnel)
 
+### User (Authentification)
+- `name` : String (requis)
+- `email` : String (requis, unique)
+- `password` : String (requis si pas Google)
+- `googleId` : String (optionnel)
+- `image` : String (optionnel)
+- `role` : String (admin/user, défaut: user)
+
 ## 🔗 API Routes
+
+### Authentification
+- `POST /api/auth/signup` - Créer un compte
+- `POST /api/auth/signin` - Se connecter
+- `GET /api/auth/signout` - Se déconnecter
+- `GET /api/auth/session` - Récupérer la session
 
 ### Auteurs
 - `GET /api/auteurs` - Liste tous les auteurs
@@ -155,12 +189,27 @@ L'application sera disponible sur [http://localhost:3000](http://localhost:3000)
 
 L'application utilise shadcn/ui pour une interface moderne et responsive :
 
+- **Authentification** : Connexion Google OAuth et par email/mot de passe
 - **Tableau de bord** : Statistiques et actions rapides
 - **Gestion des entités** : Vues liste et détail pour chaque entité
 - **Formulaires** : Validation en temps réel
-- **Navigation** : Menu de navigation principal
+- **Navigation** : Menu de navigation principal avec profil utilisateur
 - **Feedback** : Messages de succès et d'erreur
 - **Responsive** : Optimisé pour mobile et desktop
+
+## 🔐 Authentification
+
+L'application supporte deux méthodes d'authentification :
+
+1. **Google OAuth** : Connexion rapide avec votre compte Google
+2. **Email/Mot de passe** : Inscription et connexion traditionnelle
+
+### Fonctionnalités d'authentification :
+- Inscription avec validation des données
+- Connexion sécurisée avec hachage des mots de passe
+- Sessions persistantes avec NextAuth.js
+- Protection des routes (redirection automatique)
+- Menu utilisateur avec déconnexion
 
 ## 🚀 Déploiement
 
@@ -179,11 +228,17 @@ npx vercel
 3. **Configurer les variables d'environnement**
 - Aller dans les paramètres du projet Vercel
 - Ajouter `MONGODB_URI` dans les variables d'environnement
+- Ajouter `NEXTAUTH_SECRET` et `NEXTAUTH_URL`
+- Ajouter `GOOGLE_CLIENT_ID` et `GOOGLE_CLIENT_SECRET` si utilisé
 
 ### Variables d'environnement de production
 
 ```env
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/bibliotheque?retryWrites=true&w=majority
+NEXTAUTH_URL=https://your-app.vercel.app
+NEXTAUTH_SECRET=your-production-secret-key
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
 ## 🔧 Développement
@@ -214,12 +269,20 @@ npm run lint
 ## 📝 Notes importantes
 
 - L'application utilise le Pages Router de Next.js (pas App Router)
+- L'authentification est requise pour accéder à l'application
 - Les données sont mises à jour en temps réel grâce à SWR
 - La validation est faite côté client et serveur
 - L'interface est entièrement responsive
 - Le système gère automatiquement la disponibilité des livres
+- Les mots de passe sont hachés avec bcryptjs
+- Support de l'authentification Google OAuth
 
 ## 🆘 Résolution des problèmes
+
+### Problèmes d'authentification
+- Vérifier que `NEXTAUTH_SECRET` est défini
+- Contrôler les URLs de redirection Google OAuth
+- Vérifier que les variables Google sont correctement configurées
 
 ### Problèmes de connexion MongoDB
 - Vérifier que MongoDB est en cours d'exécution

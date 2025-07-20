@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Book, Users, UserCheck, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import useSWR from 'swr';
+import DownloadReports from '../components/DownloadReports';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -47,6 +48,7 @@ export default function Home() {
         <p className="mt-2 text-gray-600">
           Bienvenue dans votre système de gestion de bibliothèque
         </p>
+        <DownloadReports />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">

@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { Loading } from '@/components/ui/loading';
 import { ErrorMessage } from '@/components/ui/error';
+import DownloadReports from '../../components/DownloadReports';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -53,6 +54,7 @@ const LecteurCard = ({ lecteur, onDelete }) => {
 
 export default function LecteursPage() {
   const { data, error, mutate } = useSWR('/api/lecteurs', fetcher);
+  const [search, setSearch] = useState('');
 
   const handleDelete = async (id) => {
     try {
@@ -71,25 +73,40 @@ export default function LecteursPage() {
   if (!data) return <Loading />;
 
   const lecteurs = data.data || [];
+  const lecteursFiltres = lecteurs.filter(lecteur =>
+    lecteur.nom.toLowerCase().includes(search.toLowerCase()) ||
+    lecteur.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="px-4 py-6 sm:px-0">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Lecteurs</h1>
           <p className="mt-2 text-gray-600">
             Gérez les lecteurs de votre bibliothèque
           </p>
+          <DownloadReports reports={['lecteurs']} />
         </div>
-        <Link href="/lecteurs/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nouveau lecteur
-          </Button>
-        </Link>
+        <div className="flex flex-col md:flex-row gap-2 md:items-center">
+          <input
+            type="text"
+            placeholder="Rechercher un lecteur ou un email..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="border rounded px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+            style={{ minWidth: 220 }}
+          />
+          <Link href="/lecteurs/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau lecteur
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {lecteurs.length === 0 ? (
+      {lecteursFiltres.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
@@ -110,7 +127,7 @@ export default function LecteursPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {lecteurs.map((lecteur) => (
+          {lecteursFiltres.map((lecteur) => (
             <LecteurCard
               key={lecteur._id}
               lecteur={lecteur}
